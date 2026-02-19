@@ -22,14 +22,27 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.4.4
+    depends_on:
+      - kafka
+    ports:
+      - 8081:8081
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:9092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+
   mock-producer:
     build:
       context: .
       dockerfile: dockerfile_producer
     depends_on:
       - kafka
+      - schema-registry
     environment:
       KAFKA_BROKER: kafka:9092
-      KAFKA_TOPIC: my-topic
+      KAFKA_TOPIC: incoming_messages
       INTERVAL: 5
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
     restart: unless-stopped
